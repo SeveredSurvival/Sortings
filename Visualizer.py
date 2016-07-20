@@ -6,10 +6,6 @@ FrameHeight = 600
 FrameWidth = 500
 RectWidth = 5
 
-############
-# UI STUFF #
-############
-
 def CreateButton(x, y, text, window):
     button = Text(Point(x, y), text)
     button.setSize(10)
@@ -53,10 +49,6 @@ def MeasureTime(function):
         window.getMouse()
         return Result
     return timed_function
-
-##############
-# SORT TYPES #
-##############
 
 @MeasureTime
 def GnomeSort(list, window):
@@ -157,10 +149,6 @@ def QuickSort(list, window):
         if _right > left:
             QS(left, _right)
     QS(0, len(list) - 1)
-
-##################
-# IMPLEMENTATION #
-##################
 
 window = GraphWin("Сортировки", FrameWidth, FrameHeight)
 window.setBackground(color_rgb(255, 255, 255))
