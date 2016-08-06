@@ -1,11 +1,14 @@
 from graphics import *
 import random
 import time
-import winsound
+from pygame import midi
 
-FrameHeight = 600
-FrameWidth = 500
-RectWidth = 5
+midi.init()
+PLAYER = midi.Output(0)
+PLAYER.set_instrument(54, 1) # Nice sounds: 46, 54, 72
+FRAMEHEIGHT = 600
+FRAMEWIDTH = 500
+RECTWIDTH = 5
 
 def CreateButton(x, y, text, window):
     button = Text(Point(x, y), text)
@@ -13,29 +16,33 @@ def CreateButton(x, y, text, window):
     button.draw(window)
 
 def DrawRect(x1, y1, x2, y2, win, visible):
-    if visible: 
+    if visible:
         color = color_rgb(74, 137, 220) 
-    else: 
+    else:
         color = color_rgb(255, 255, 255)
     rect = Rectangle(Point(x1, y1), Point(x2, y2))
     rect.setOutline(color)
     rect.setFill(color)
     rect.draw(win)
 
+def Pling(note):
+    PLAYER.note_on(note, 127, 1)
+    time.sleep(0.01)
+    PLAYER.note_off(note, 127, 1)
+
 def MoveElements(index1, index2, list, window):
-    DrawRect(index1 * RectWidth, FrameHeight, index1 * RectWidth + RectWidth, 100, window, False)
-    DrawRect(index1 * RectWidth, FrameHeight, index1 * RectWidth + RectWidth, FrameHeight - (RectWidth * list[index1]), window, True)  
-    winsound.Beep(int(440 * ((2)**(1.0/12.0))**(index1/6)), 30)    
-    DrawRect(index2 * RectWidth, FrameHeight, index2 * RectWidth + RectWidth, 100, window, False)
-    DrawRect(index2 * RectWidth, FrameHeight, index2 * RectWidth + RectWidth, FrameHeight - (RectWidth * list[index2]), window, True)
-    winsound.Beep(int(440 * ((2)**(1.0/12.0))**(index2/6)), 30)
+    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, 100, window, False)
+    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index1]), window, True)  
+    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, 100, window, False)
+    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index2]), window, True)
+    Pling(int(list[index2]))
 
 def GenerateUI(list, window):
     step = 0
     window.delete('all')
     for element in list:
-        DrawRect(step, FrameHeight, step + RectWidth, FrameHeight - (RectWidth * element), window, True)
-        step += RectWidth
+        DrawRect(step, FRAMEHEIGHT, step + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * element), window, True)
+        step += RECTWIDTH
     CreateButton(30, 15, 'Gnome', window)
     CreateButton(90, 15, 'Bubble', window)
     CreateButton(150, 15, 'Shaker', window)
@@ -121,7 +128,7 @@ def CombSort(list, window):
             if list[leftptr] > list[rightptr]:
                 list[leftptr], list[rightptr] = list[rightptr], list[leftptr]
                 MoveElements(leftptr, rightptr, list, window)
-                time.sleep(0.05)
+                time.sleep(0.01)
             rightptr += 1
             leftptr += 1
         if _rightptr > 1: 
@@ -144,7 +151,7 @@ def QuickSort(list, window):
             if left <= right:
                 list[right], list[left] = list[left], list[right]
                 MoveElements(left, right, list, window)
-                time.sleep(0.05)
+                time.sleep(0.01)
                 left += 1
                 right -= 1
         if right > _left:
@@ -152,13 +159,12 @@ def QuickSort(list, window):
         if _right > left:
             QS(left, _right)
     QS(0, len(list) - 1)
-        
-window = GraphWin("Сортировки", FrameWidth, FrameHeight)
+
+window = GraphWin("Сортировки", FRAMEWIDTH, FRAMEHEIGHT)
 window.setBackground(color_rgb(255, 255, 255))
 list = random.sample(range(100), 100)
 _list = list.copy()
 GenerateUI(_list, window)
-
 while True:
     try:
         point = window.getMouse()
@@ -175,4 +181,3 @@ while True:
             GenerateUI(_list, window)
     except:
         break
-        
