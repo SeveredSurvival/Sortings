@@ -1,6 +1,7 @@
 from graphics import *
 import random
 import time
+import winsound
 
 FrameHeight = 600
 FrameWidth = 500
@@ -23,9 +24,11 @@ def DrawRect(x1, y1, x2, y2, win, visible):
 
 def MoveElements(index1, index2, list, window):
     DrawRect(index1 * RectWidth, FrameHeight, index1 * RectWidth + RectWidth, 100, window, False)
-    DrawRect(index1 * RectWidth, FrameHeight, index1 * RectWidth + RectWidth, FrameHeight - (RectWidth * list[index1]), window, True)         
+    DrawRect(index1 * RectWidth, FrameHeight, index1 * RectWidth + RectWidth, FrameHeight - (RectWidth * list[index1]), window, True)  
+    winsound.Beep(int(440 * ((2)**(1.0/12.0))**(index1/6)), 30)    
     DrawRect(index2 * RectWidth, FrameHeight, index2 * RectWidth + RectWidth, 100, window, False)
     DrawRect(index2 * RectWidth, FrameHeight, index2 * RectWidth + RectWidth, FrameHeight - (RectWidth * list[index2]), window, True)
+    winsound.Beep(int(440 * ((2)**(1.0/12.0))**(index2/6)), 30)
 
 def GenerateUI(list, window):
     step = 0
@@ -149,7 +152,7 @@ def QuickSort(list, window):
         if _right > left:
             QS(left, _right)
     QS(0, len(list) - 1)
-
+        
 window = GraphWin("Сортировки", FrameWidth, FrameHeight)
 window.setBackground(color_rgb(255, 255, 255))
 list = random.sample(range(100), 100)
