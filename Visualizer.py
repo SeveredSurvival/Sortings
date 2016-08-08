@@ -1,4 +1,5 @@
 from graphics import *
+from math import ceil
 import random
 import time
 from pygame import midi
@@ -37,6 +38,11 @@ def MoveElements(index1, index2, list, window):
     DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index2]), window, True)
     Pling(int(list[index2]))
 
+def MoveElement(index, size, list, window):
+    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, 100, window, False)
+    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), window, True)
+    Pling(size)
+
 def GenerateUI(list, window):
     step = 0
     window.delete('all')
@@ -49,6 +55,7 @@ def GenerateUI(list, window):
     CreateButton(210, 15, 'EvenOdd', window)
     CreateButton(270, 15, 'Comb', window)
     CreateButton(330, 15, 'Quick', window)
+    CreateButton(390, 15, 'Merge', window)
 
 def MeasureTime(function):
     def timed_function(*args, **kwargs):     
@@ -160,6 +167,34 @@ def QuickSort(list, window):
             QS(left, _right)
     QS(0, len(list) - 1)
 
+@MeasureTime
+def MergeSort(list, window):
+    def MS(part, ofs):
+        result = []
+        if len(part) < 2: return part
+        mid = ceil(len(part) / 2)
+        y = MS(part[:mid], ofs)
+        z = MS(part[mid:], mid + ofs - 1)
+        i = 0
+        j = 0
+        while i < len(y) and j < len(z):
+            if y[i] > z[j]:
+                result.append(z[j])
+                MoveElement(i + j + ofs, z[j], list, window)
+                j += 1
+            else:
+                result.append(y[i])                
+                MoveElement(i + j + ofs, y[i], list, window)
+                i += 1
+        for item in y[i:]:
+            result.append(item)
+            MoveElement(ofs + len(result) - 1, item, list, window)        
+        for item in z[j:]:
+            result.append(item)
+            MoveElement(ofs + len(result) - 1, item, list, window)
+        return result
+    MS(list, 0)
+
 window = GraphWin("Сортировки", FRAMEWIDTH, FRAMEHEIGHT)
 window.setBackground(color_rgb(255, 255, 255))
 list = random.sample(range(100), 100)
@@ -171,12 +206,13 @@ while True:
         x = point.x
         y = point.y
         if y < 30:
-            if x < 60   : GnomeSort(_list, window)
+            if   x < 60 : GnomeSort(_list, window)
             elif x < 120: BubbleSort(_list, window)
             elif x < 180: ShakerSort(_list, window)
             elif x < 240: EvenOddSort(_list, window)
             elif x < 300: CombSort(_list, window)
             elif x < 360: QuickSort(_list, window)
+            elif x < 420: MergeSort(_list, window)
             _list = list.copy()
             GenerateUI(_list, window)
     except:
