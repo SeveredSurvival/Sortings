@@ -174,7 +174,7 @@ def MergeSort(list, window):
         if len(part) < 2: return part
         mid = ceil(len(part) / 2)
         y = MS(part[:mid], ofs)
-        z = MS(part[mid:], mid + ofs - 1)
+        z = MS(part[mid:], mid + ofs)
         i = 0
         j = 0
         while i < len(y) and j < len(z):
