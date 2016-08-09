@@ -27,6 +27,7 @@ def DrawRect(x1, y1, x2, y2, win, visible):
     rect.draw(win)
 
 def Pling(note):
+    note = ceil(note / 2) + 50
     PLAYER.note_on(note, 127, 1)
     time.sleep(0.01)
     PLAYER.note_off(note, 127, 1)
@@ -53,9 +54,10 @@ def GenerateUI(list, window):
     CreateButton(90, 15, 'Bubble', window)
     CreateButton(150, 15, 'Shaker', window)
     CreateButton(210, 15, 'EvenOdd', window)
-    CreateButton(270, 15, 'Comb', window)
-    CreateButton(330, 15, 'Quick', window)
-    CreateButton(390, 15, 'Merge', window)
+    CreateButton(270, 15, 'Heap', window)
+    CreateButton(330, 15, 'Merge', window)
+    CreateButton(390, 15, 'Comb', window)
+    CreateButton(450, 15, 'Quick', window)
 
 def MeasureTime(function):
     def timed_function(*args, **kwargs):     
@@ -195,6 +197,27 @@ def MergeSort(list, window):
         return result
     MS(list, 0)
 
+@MeasureTime
+def HeapSort(list, window):
+    def shiftDown(list, i, j):
+        while i * 2 + 1 < j:
+            if i * 2 + 1 == j - 1 or list[i * 2 + 1] > list[i * 2 + 2]:
+                maxChild = i * 2 + 1
+            else:
+                maxChild = i * 2 + 2
+            if list[i] < list[maxChild]:
+                list[i], list[maxChild] = list[maxChild], list[i]
+                MoveElements(i, maxChild, list, window)
+                i = maxChild
+            else:
+                break
+    for i in range(int(len(list) / 2 - 1), -1, -1):
+        shiftDown(list, i, len(list))
+    for i in range(len(list) - 1, 0, -1):
+        list[0], list[i] = list[i], list[0]
+        MoveElements(0, i, list, window)
+        shiftDown(list, 0, i)
+
 window = GraphWin("Сортировки", FRAMEWIDTH, FRAMEHEIGHT)
 window.setBackground(color_rgb(255, 255, 255))
 list = random.sample(range(100), 100)
@@ -210,9 +233,10 @@ while True:
             elif x < 120: BubbleSort(_list, window)
             elif x < 180: ShakerSort(_list, window)
             elif x < 240: EvenOddSort(_list, window)
-            elif x < 300: CombSort(_list, window)
-            elif x < 360: QuickSort(_list, window)
-            elif x < 420: MergeSort(_list, window)
+            elif x < 300: HeapSort(_list, window)
+            elif x < 360: MergeSort(_list, window)
+            elif x < 420: CombSort(_list, window)
+            elif x < 480: QuickSort(_list, window)
             _list = list.copy()
             GenerateUI(_list, window)
     except:
