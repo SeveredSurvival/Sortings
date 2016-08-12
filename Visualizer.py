@@ -1,15 +1,21 @@
 from graphics import *
 from math import ceil
+from pygame import midi
 import random
 import time
-from pygame import midi
+import gc
+
+# CONFIGURATION PART
+FRAMEWIDTH = 500
+RECTWIDTH = 3
+INSTRUMENT_ID = 54 #54
+# END OF CONFIG
 
 midi.init()
 PLAYER = midi.Output(0)
-PLAYER.set_instrument(54, 1) # Nice sounds: 46, 54, 72
-FRAMEHEIGHT = 600
-FRAMEWIDTH = 500
-RECTWIDTH = 5
+PLAYER.set_instrument(INSTRUMENT_ID, 1)
+CANVAS_SIZE = ceil(FRAMEWIDTH / RECTWIDTH)
+FRAMEHEIGHT = FRAMEWIDTH + 100
 
 def CreateButton(x, y, text, window):
     button = Text(Point(x, y), text)
@@ -27,7 +33,7 @@ def DrawRect(x1, y1, x2, y2, win, visible):
     rect.draw(win)
 
 def Pling(note):
-    note = ceil(note / 2) + 50
+    note = ceil(note / CANVAS_SIZE * 50) + 50
     PLAYER.note_on(note, 127, 1)
     time.sleep(0.01)
     PLAYER.note_off(note, 127, 1)
@@ -47,14 +53,15 @@ def MoveElement(index, size, list, window):
 def GenerateUI(list, window):
     step = 0
     window.delete('all')
+    gc.collect()
     for element in list:
         DrawRect(step, FRAMEHEIGHT, step + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * element), window, True)
         step += RECTWIDTH
-    CreateButton(30, 15, 'Gnome', window)
-    CreateButton(90, 15, 'Bubble', window)
-    CreateButton(150, 15, 'Shaker', window)
-    CreateButton(210, 15, 'EvenOdd', window)
-    CreateButton(270, 15, 'Heap', window)
+    CreateButton(30, 15,  'Bubble', window)
+    CreateButton(90, 15,  'EvenOdd', window)
+    CreateButton(150, 15, 'Insertion', window)
+    CreateButton(210, 15, 'Heap', window)
+    CreateButton(270, 15, 'Radix', window)
     CreateButton(330, 15, 'Merge', window)
     CreateButton(390, 15, 'Comb', window)
     CreateButton(450, 15, 'Quick', window)
@@ -68,6 +75,16 @@ def MeasureTime(function):
         window.getMouse()
         return Result
     return timed_function
+    
+def Debug(function):
+    def debugged_function(*args, **kwargs):
+        import traceback
+        try:
+            Result = function(*args, **kwargs)
+        except Exception:
+            traceback.print_exc()
+        return Result
+    return debugged_function
 
 @MeasureTime
 def GnomeSort(list, window):
@@ -126,7 +143,7 @@ def EvenOddSort(list, window):
 
 @MeasureTime
 def CombSort(list, window):
-    DECREASE_FACTOR = 1.24
+    DECREASE_FACTOR = 1.247
     length = len(list) - 1
     _rightptr = round(length / DECREASE_FACTOR)
     rightptr = _rightptr
@@ -137,7 +154,6 @@ def CombSort(list, window):
             if list[leftptr] > list[rightptr]:
                 list[leftptr], list[rightptr] = list[rightptr], list[leftptr]
                 MoveElements(leftptr, rightptr, list, window)
-                time.sleep(0.01)
             rightptr += 1
             leftptr += 1
         if _rightptr > 1: 
@@ -160,7 +176,6 @@ def QuickSort(list, window):
             if left <= right:
                 list[right], list[left] = list[left], list[right]
                 MoveElements(left, right, list, window)
-                time.sleep(0.01)
                 left += 1
                 right -= 1
         if right > _left:
@@ -196,6 +211,7 @@ def MergeSort(list, window):
             MoveElement(ofs + len(result) - 1, item, list, window)
         return result
     MS(list, 0)
+    return None
 
 @MeasureTime
 def HeapSort(list, window):
@@ -218,9 +234,46 @@ def HeapSort(list, window):
         MoveElements(0, i, list, window)
         shiftDown(list, 0, i)
 
-window = GraphWin("Сортировки", FRAMEWIDTH, FRAMEHEIGHT)
+@MeasureTime
+def InsertionSort(list, window):
+    curptr = 2
+    while curptr < len(list):
+        key = list[curptr]
+        prevptr = curptr - 1
+        while prevptr >= 0 and list[prevptr] > key:
+            list[prevptr + 1] = list[prevptr]
+            MoveElement(prevptr, 0, list, window)
+            MoveElement(prevptr + 1, list[prevptr], list, window)
+            prevptr -= 1
+        list[prevptr + 1] = key
+        MoveElement(prevptr + 1, key, list, window)
+        curptr += 1
+      
+@MeasureTime
+def RadixSort(list, window):
+    RADIX = 10
+    maxLength = False
+    tmp, placement = -1, 1
+    while not maxLength:
+        maxLength = True
+        buckets = [[] for _ in range(RADIX)]
+        for i in list:
+            tmp = i / placement
+            buckets[int(tmp % RADIX)].append(i)
+            if tmp >= 1: maxLength = False
+        if maxLength: break
+        a = 0
+        for b in range(RADIX):
+            buck = buckets[b]
+            for i in buck:
+                list[a] = i
+                MoveElement(a, i, list, window)
+                a += 1
+        placement *= RADIX
+
+window = GraphWin("Сортировки @ github.com/Worldbeater", FRAMEWIDTH, FRAMEHEIGHT)
 window.setBackground(color_rgb(255, 255, 255))
-list = random.sample(range(100), 100)
+list = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
 _list = list.copy()
 GenerateUI(_list, window)
 while True:
@@ -229,11 +282,11 @@ while True:
         x = point.x
         y = point.y
         if y < 30:
-            if   x < 60 : GnomeSort(_list, window)
-            elif x < 120: BubbleSort(_list, window)
-            elif x < 180: ShakerSort(_list, window)
-            elif x < 240: EvenOddSort(_list, window)
-            elif x < 300: HeapSort(_list, window)
+            if   x < 60 : BubbleSort(_list, window)
+            elif x < 120: EvenOddSort(_list, window)
+            elif x < 180: InsertionSort(_list, window)
+            elif x < 240: HeapSort(_list, window)
+            elif x < 300: RadixSort(_list, window)
             elif x < 360: MergeSort(_list, window)
             elif x < 420: CombSort(_list, window)
             elif x < 480: QuickSort(_list, window)
