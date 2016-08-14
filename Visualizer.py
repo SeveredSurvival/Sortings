@@ -1,24 +1,21 @@
 from graphics import *
-from math import ceil
 from pygame import midi
 import random
 import time
-import gc
 
-# CONFIGURATION PART
 FRAMEWIDTH = 500
-RECTWIDTH = 1
-INSTRUMENT_ID = 54 #54
-# END OF CONFIG
+RECTWIDTH = 5
+INSTRUMENT_ID = 54
 
 midi.init()
 PLAYER = midi.Output(0)
 PLAYER.set_instrument(INSTRUMENT_ID, 1)
-CANVAS_SIZE = ceil(FRAMEWIDTH / RECTWIDTH)
+CANVAS_SIZE = round(FRAMEWIDTH / RECTWIDTH)
 FRAMEHEIGHT = FRAMEWIDTH + 100
 
-def CreateButton(x, y, text, window):
+def CreateButton(x, y, text, window, style = 'normal'):
     button = Text(Point(x, y), text)
+    button.setStyle(style)
     button.setSize(10)
     button.draw(window)
 
@@ -33,7 +30,7 @@ def DrawRect(x1, y1, x2, y2, win, visible):
     rect.draw(win)
 
 def Pling(note):
-    note = ceil(note / CANVAS_SIZE * 50) + 50
+    note = round(note / CANVAS_SIZE * 50) + 50
     PLAYER.note_on(note, 127, 1)
     time.sleep(0.01)
     PLAYER.note_off(note, 127, 1)
@@ -53,7 +50,6 @@ def MoveElement(index, size, list, window):
 def GenerateUI(list, window):
     step = 0
     window.delete('all')
-    gc.collect()
     for element in list:
         DrawRect(step, FRAMEHEIGHT, step + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * element), window, True)
         step += RECTWIDTH
@@ -69,6 +65,8 @@ def GenerateUI(list, window):
     CreateButton(90, 40, 'Even-Odd', window)
     CreateButton(150, 40, 'Shaker', window)
     CreateButton(210, 40, 'Counting', window)
+    CreateButton(270, 40, 'Bucket', window)
+    CreateButton(430, 40, 'Change size', window, style = 'bold')
     
 def MeasureTime(function):
     def timed_function(*args, **kwargs):     
@@ -194,34 +192,35 @@ def QuickSort(list, window):
     QS(0, len(list) - 1)
     return list
     
+    
+def MS(part, ofs):
+    result = []
+    if len(part) < 2: return part
+    mid = round(len(part) / 2)
+    y = MS(part[:mid], ofs)
+    z = MS(part[mid:], mid + ofs)
+    i = 0
+    j = 0
+    while i < len(y) and j < len(z):
+        if y[i] > z[j]:
+            result.append(z[j])
+            MoveElement(i + j + ofs, z[j], list, window)
+            j += 1
+        else:
+            result.append(y[i])                
+            MoveElement(i + j + ofs, y[i], list, window)
+            i += 1
+    for item in y[i:]:
+        result.append(item)
+        MoveElement(ofs + len(result) - 1, item, list, window)        
+    for item in z[j:]:
+        result.append(item)
+        MoveElement(ofs + len(result) - 1, item, list, window)
+    return result
+
 @MeasureTime
-def MergeSort(list, window):
-    def MS(part, ofs):
-        result = []
-        if len(part) < 2: return part
-        mid = ceil(len(part) / 2)
-        y = MS(part[:mid], ofs)
-        z = MS(part[mid:], mid + ofs)
-        i = 0
-        j = 0
-        while i < len(y) and j < len(z):
-            if y[i] > z[j]:
-                result.append(z[j])
-                MoveElement(i + j + ofs, z[j], list, window)
-                j += 1
-            else:
-                result.append(y[i])                
-                MoveElement(i + j + ofs, y[i], list, window)
-                i += 1
-        for item in y[i:]:
-            result.append(item)
-            MoveElement(ofs + len(result) - 1, item, list, window)        
-        for item in z[j:]:
-            result.append(item)
-            MoveElement(ofs + len(result) - 1, item, list, window)
-        return result
-    MS(list, 0)
-    return list
+def MergeSort(list, window): 
+    return MS(list, 0)
 
 @MeasureTime
 def HeapSort(list, window):
@@ -299,8 +298,7 @@ def SelectionSort(list, window):
         time.sleep(0.15)
         curptr += 1
     return list
-        
-@Debug
+      
 @MeasureTime
 def CountingSort(list, window):
     MAX = CANVAS_SIZE
@@ -315,34 +313,62 @@ def CountingSort(list, window):
             MoveElement(i, list[i], list, window)
             i += 1
     return list
-            
-window = GraphWin("Сортировки @ github.com/Worldbeater", FRAMEWIDTH, FRAMEHEIGHT)
-window.setBackground(color_rgb(255, 255, 255))
-list = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
-_list = list.copy()
-GenerateUI(_list, window)
-while True:
-    try:
-        point = window.getMouse()
-        x = point.x
-        y = point.y
-        if y < 30:
-            if   x < 60 : BubbleSort(_list, window)
-            elif x < 120: SelectionSort(_list, window)
-            elif x < 180: InsertionSort(_list, window)
-            elif x < 240: HeapSort(_list, window)
-            elif x < 300: RadixSort(_list, window)
-            elif x < 360: MergeSort(_list, window)
-            elif x < 420: CombSort(_list, window)
-            elif x < 480: QuickSort(_list, window)
-            _list = list.copy()
-            GenerateUI(_list, window)
-        elif y < 55:
-            if   x < 60 : GnomeSort(_list, window)
-            elif x < 120: EvenOddSort(_list, window)
-            elif x < 180: ShakerSort(_list, window)
-            elif x < 240: CountingSort(_list, window)
-            _list = list.copy()
-            GenerateUI(_list, window)
-    except:
-        break
+      
+@MeasureTime
+def BucketSort(array, window):
+    minValue = 0
+    maxValue = CANVAS_SIZE
+    bucketSize = 4
+    bucketCount = int((maxValue - minValue) / bucketSize) + 1
+    buckets = []
+    for i in range(0, bucketCount): buckets.append([])
+    for i in range(0, len(array)): 
+        index = int((array[i] - minValue) / bucketSize)
+        buckets[index].append(array[i])
+        MoveElement((index * bucketSize) + len(buckets[index]) - 1, array[i], list, window)      
+    array = []
+    offset = 0
+    for i in range(0, len(buckets)):
+        array.append(MS(buckets[i], offset))
+        offset += len(buckets[i])
+    return array
+       
+if __name__ == "__main__":       
+    window = GraphWin("Сортировки @ github.com/Worldbeater", FRAMEWIDTH, FRAMEHEIGHT)
+    window.setBackground(color_rgb(255, 255, 255))
+    list = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
+    _list = list.copy()
+    GenerateUI(_list, window)
+    while True:
+        try:
+            point = window.getMouse()
+            x = point.x
+            y = point.y
+            if y < 30:
+                if   x < 60 : BubbleSort(_list, window)
+                elif x < 120: SelectionSort(_list, window)
+                elif x < 180: InsertionSort(_list, window)
+                elif x < 240: HeapSort(_list, window)
+                elif x < 300: RadixSort(_list, window)
+                elif x < 360: MergeSort(_list, window)
+                elif x < 420: CombSort(_list, window)
+                elif x < 480: QuickSort(_list, window)
+                _list = list.copy()
+                GenerateUI(_list, window)
+            elif y < 55:
+                if   x < 60 : GnomeSort(_list, window)
+                elif x < 120: EvenOddSort(_list, window)
+                elif x < 180: ShakerSort(_list, window)
+                elif x < 240: CountingSort(_list, window)
+                elif x < 300: BucketSort(_list, window)
+                else:
+                    if RECTWIDTH < 10:
+                        RECTWIDTH = RECTWIDTH + 5
+                    else: 
+                        RECTWIDTH = 1
+                    CANVAS_SIZE = round(FRAMEWIDTH / RECTWIDTH)
+                    list = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
+                _list = list.copy()
+                GenerateUI(_list, window)
+        except:
+            break
