@@ -1,6 +1,6 @@
 # Sorting Algorithms Cheatsheet
 This Python app demonstrates how popular sorting algorithms work, look like and sound! <br>
-You can get it from here: <a href="github.com/Worldbeater/SortingAlgorithmsCheatsheet/releases">Releases page</a>
+You can get it from here: <a href="http://github.com/Worldbeater/SortingAlgorithmsCheatsheet/releases">Releases page</a>
 
 Several examples:
 
