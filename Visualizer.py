@@ -7,7 +7,7 @@ import gc
 
 # CONFIGURATION PART
 FRAMEWIDTH = 500
-RECTWIDTH = 3
+RECTWIDTH = 1
 INSTRUMENT_ID = 54 #54
 # END OF CONFIG
 
@@ -58,20 +58,24 @@ def GenerateUI(list, window):
         DrawRect(step, FRAMEHEIGHT, step + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * element), window, True)
         step += RECTWIDTH
     CreateButton(30, 15,  'Bubble', window)
-    CreateButton(90, 15,  'EvenOdd', window)
+    CreateButton(90, 15,  'Selection', window)
     CreateButton(150, 15, 'Insertion', window)
     CreateButton(210, 15, 'Heap', window)
     CreateButton(270, 15, 'Radix', window)
     CreateButton(330, 15, 'Merge', window)
     CreateButton(390, 15, 'Comb', window)
     CreateButton(450, 15, 'Quick', window)
-
+    CreateButton(30, 40, 'Gnome', window)
+    CreateButton(90, 40, 'Even-Odd', window)
+    CreateButton(150, 40, 'Shaker', window)
+    CreateButton(210, 40, 'Counting', window)
+    
 def MeasureTime(function):
     def timed_function(*args, **kwargs):     
         start = time.time()
         Result = function(*args, **kwargs);
         end = time.time()
-        CreateButton(51, 40, 'Time: ' + str(end - start)[0:7], window)
+        CreateButton(51, 65, 'Time: ' + str(end - start)[0:7], window)
         window.getMouse()
         return Result
     return timed_function
@@ -95,6 +99,7 @@ def GnomeSort(list, window):
             MoveElements(curptr, curptr + 1, list, window)
             curptr = 0
         else: curptr += 1
+    return list
 
 @MeasureTime
 def BubbleSort(list, window):
@@ -107,6 +112,7 @@ def BubbleSort(list, window):
                 MoveElements(curptr, curptr + 1, list, window)
             curptr += 1
         length -= 1
+    return list
 
 @MeasureTime
 def ShakerSort(list, window):
@@ -126,6 +132,7 @@ def ShakerSort(list, window):
                 MoveElements(curptr - 1, curptr, list, window)
             curptr -= 1
         bleft += 1
+    return list
 
 @MeasureTime
 def EvenOddSort(list, window):
@@ -140,10 +147,11 @@ def EvenOddSort(list, window):
             finish += 1
             curptr += 2
         curptr = abs(curptr % 2 - 1)
+    return list
 
 @MeasureTime
 def CombSort(list, window):
-    DECREASE_FACTOR = 1.247
+    DECREASE_FACTOR = 1.25
     length = len(list) - 1
     _rightptr = round(length / DECREASE_FACTOR)
     rightptr = _rightptr
@@ -161,7 +169,8 @@ def CombSort(list, window):
         else:
             length -= 1
         rightptr = _rightptr
-
+    return list
+    
 @MeasureTime
 def QuickSort(list, window):
     def QS(_left, _right):
@@ -183,7 +192,8 @@ def QuickSort(list, window):
         if _right > left:
             QS(left, _right)
     QS(0, len(list) - 1)
-
+    return list
+    
 @MeasureTime
 def MergeSort(list, window):
     def MS(part, ofs):
@@ -211,7 +221,7 @@ def MergeSort(list, window):
             MoveElement(ofs + len(result) - 1, item, list, window)
         return result
     MS(list, 0)
-    return None
+    return list
 
 @MeasureTime
 def HeapSort(list, window):
@@ -233,10 +243,11 @@ def HeapSort(list, window):
         list[0], list[i] = list[i], list[0]
         MoveElements(0, i, list, window)
         shiftDown(list, 0, i)
+    return list
 
 @MeasureTime
 def InsertionSort(list, window):
-    curptr = 2
+    curptr = 1
     while curptr < len(list):
         key = list[curptr]
         prevptr = curptr - 1
@@ -248,7 +259,8 @@ def InsertionSort(list, window):
         list[prevptr + 1] = key
         MoveElement(prevptr + 1, key, list, window)
         curptr += 1
-      
+    return list
+    
 @MeasureTime
 def RadixSort(list, window):
     RADIX = 10
@@ -270,7 +282,40 @@ def RadixSort(list, window):
                 MoveElement(a, i, list, window)
                 a += 1
         placement *= RADIX
+    return list
 
+@MeasureTime
+def SelectionSort(list, window):
+    curptr = 0
+    while curptr < len(list):
+        ptr = curptr
+        keyindex = curptr
+        while ptr < len(list):
+            if list[ptr] <= list[keyindex]:
+                keyindex = ptr
+            ptr += 1
+        list[curptr], list[keyindex] = list[keyindex], list[curptr]
+        MoveElements(curptr, keyindex, list, window)
+        time.sleep(0.15)
+        curptr += 1
+    return list
+        
+@Debug
+@MeasureTime
+def CountingSort(list, window):
+    MAX = CANVAS_SIZE
+    count = [0] * (MAX + 1)
+    for item in list: 
+        count[item] += 1
+        MoveElement(item, count[item], list, window)
+    i = 0
+    for item in range(MAX + 1):
+        for c in range(count[item]):
+            list[i] = item
+            MoveElement(i, list[i], list, window)
+            i += 1
+    return list
+            
 window = GraphWin("Сортировки @ github.com/Worldbeater", FRAMEWIDTH, FRAMEHEIGHT)
 window.setBackground(color_rgb(255, 255, 255))
 list = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
@@ -283,13 +328,20 @@ while True:
         y = point.y
         if y < 30:
             if   x < 60 : BubbleSort(_list, window)
-            elif x < 120: EvenOddSort(_list, window)
+            elif x < 120: SelectionSort(_list, window)
             elif x < 180: InsertionSort(_list, window)
             elif x < 240: HeapSort(_list, window)
             elif x < 300: RadixSort(_list, window)
             elif x < 360: MergeSort(_list, window)
             elif x < 420: CombSort(_list, window)
             elif x < 480: QuickSort(_list, window)
+            _list = list.copy()
+            GenerateUI(_list, window)
+        elif y < 55:
+            if   x < 60 : GnomeSort(_list, window)
+            elif x < 120: EvenOddSort(_list, window)
+            elif x < 180: ShakerSort(_list, window)
+            elif x < 240: CountingSort(_list, window)
             _list = list.copy()
             GenerateUI(_list, window)
     except:
