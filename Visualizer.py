@@ -4,7 +4,7 @@ import random
 import time
 
 FRAMEWIDTH = 500
-RECTWIDTH = 5
+RECTWIDTH = 10
 INSTRUMENT_ID = 54
 
 midi.init()
@@ -19,39 +19,47 @@ def CreateButton(x, y, text, window, style = 'normal'):
     button.setSize(10)
     button.draw(window)
 
-def DrawRect(x1, y1, x2, y2, win, visible):
-    if visible:
-        color = color_rgb(74, 137, 220) 
-    else:
-        color = color_rgb(255, 255, 255)
+def DrawRect(x1, y1, x2, y2, win, color = color_rgb(74,137,220)):
     rect = Rectangle(Point(x1, y1), Point(x2, y2))
     rect.setOutline(color)
     rect.setFill(color)
     rect.draw(win)
 
 def Pling(note):
+    if RECTWIDTH == 1: return None
     note = round(note / CANVAS_SIZE * 50) + 50
     PLAYER.note_on(note, 127, 1)
     time.sleep(0.01)
     PLAYER.note_off(note, 127, 1)
 
+def MarkElements(index1, index2, list, window):
+    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index2]), window, color = color_rgb(255,0,0))
+    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index1]), window, color = color_rgb(255,0,0))  
+    Pling(int(list[index2]))
+    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index2]), window)
+    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index1]), window) 
+
+def MarkElement(index, size, list, window):
+    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), window, color = color_rgb(255,0,0))
+    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), window)
+
 def MoveElements(index1, index2, list, window):
-    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, 100, window, False)
-    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index1]), window, True)  
-    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, 100, window, False)
-    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index2]), window, True)
+    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, 100, window, color = color_rgb(255,255,255))
+    DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT, index1 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index1]), window)  
+    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, 100, window, color = color_rgb(255,255,255))
+    DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT, index2 * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * list[index2]), window)
     Pling(int(list[index2]))
 
 def MoveElement(index, size, list, window):
-    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, 100, window, False)
-    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), window, True)
+    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, 100, window, color = color_rgb(255,255,255))
+    DrawRect(index * RECTWIDTH, FRAMEHEIGHT, index * RECTWIDTH + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), window)
     Pling(size)
 
 def GenerateUI(list, window):
     step = 0
     window.delete('all')
     for element in list:
-        DrawRect(step, FRAMEHEIGHT, step + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * element), window, True)
+        DrawRect(step, FRAMEHEIGHT, step + RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * element), window)
         step += RECTWIDTH
     CreateButton(30, 15,  'Bubble', window)
     CreateButton(90, 15,  'Selection', window)
@@ -92,6 +100,7 @@ def Debug(function):
 def GnomeSort(list, window):
     curptr = 0
     while curptr < len(list) - 1:
+        MarkElements(curptr, curptr + 1, list, window)
         if list[curptr] > list[curptr + 1]: 
             list[curptr], list[curptr + 1] = list[curptr + 1], list[curptr]
             MoveElements(curptr, curptr + 1, list, window)
@@ -105,6 +114,7 @@ def BubbleSort(list, window):
     while length > 0:
         curptr = 0
         while curptr < length:
+            MarkElements(curptr, curptr + 1, list, window)
             if list[curptr] > list[curptr + 1]: 
                 list[curptr], list[curptr + 1] = list[curptr + 1], list[curptr]
                 MoveElements(curptr, curptr + 1, list, window)
@@ -119,12 +129,14 @@ def ShakerSort(list, window):
     bright = len(list) - 1
     while bright >= bleft:
         while curptr < bright:
+            MarkElements(curptr, curptr + 1, list, window)
             if list[curptr] > list[curptr + 1]: 
                 list[curptr], list[curptr + 1] = list[curptr + 1], list[curptr]
                 MoveElements(curptr, curptr + 1, list, window)
             curptr += 1
         bright -= 1
         while curptr > bleft:
+            MarkElements(curptr - 1, curptr, list, window)
             if list[curptr - 1] > list[curptr]:
                 list[curptr], list[curptr - 1] = list[curptr - 1], list[curptr]
                 MoveElements(curptr - 1, curptr, list, window)
@@ -138,6 +150,7 @@ def EvenOddSort(list, window):
     finish = 0
     while finish < len(list) - 1:
         while curptr < len(list) - 1:
+            MarkElements(curptr, curptr + 1, list, window)
             if list[curptr] > list[curptr + 1]:
                 list[curptr], list[curptr + 1] = list[curptr + 1], list[curptr]
                 MoveElements(curptr, curptr + 1, list, window)
@@ -153,10 +166,11 @@ def CombSort(list, window):
     length = len(list) - 1
     _rightptr = round(length / DECREASE_FACTOR)
     rightptr = _rightptr
-    while length > 0:
+    while True:
         leftptr = 0
         rightptr = _rightptr
         while rightptr < len(list):
+            MarkElements(leftptr, rightptr, list, window)
             if list[leftptr] > list[rightptr]:
                 list[leftptr], list[rightptr] = list[rightptr], list[leftptr]
                 MoveElements(leftptr, rightptr, list, window)
@@ -165,10 +179,10 @@ def CombSort(list, window):
         if _rightptr > 1: 
             _rightptr = int(_rightptr / DECREASE_FACTOR)
         else:
-            length -= 1
+            break
         rightptr = _rightptr
     return list
-    
+ 
 @MeasureTime
 def QuickSort(list, window):
     def QS(_left, _right):
@@ -177,8 +191,10 @@ def QuickSort(list, window):
         pivot = list[round((left + right) / 2)]
         while left <= right:
             while list[left] < pivot:
+                MarkElements(left, round((left + right) / 2), list, window)
                 left += 1
             while list[right] > pivot:
+                MarkElements(right, round((left + right) / 2), list, window)
                 right -= 1
             if left <= right:
                 list[right], list[left] = list[left], list[right]
@@ -202,6 +218,8 @@ def MS(part, ofs):
     i = 0
     j = 0
     while i < len(y) and j < len(z):
+        MarkElement(i + j + ofs, y[i], list, window)
+        MarkElement(i + j + ofs, z[j], list, window)
         if y[i] > z[j]:
             result.append(z[j])
             MoveElement(i + j + ofs, z[j], list, window)
@@ -221,7 +239,7 @@ def MS(part, ofs):
 @MeasureTime
 def MergeSort(list, window): 
     return MS(list, 0)
-
+@Debug
 @MeasureTime
 def HeapSort(list, window):
     def shiftDown(list, i, j):
@@ -230,6 +248,7 @@ def HeapSort(list, window):
                 maxChild = i * 2 + 1
             else:
                 maxChild = i * 2 + 2
+            MarkElements(i, maxChild, list, window)
             if list[i] < list[maxChild]:
                 list[i], list[maxChild] = list[maxChild], list[i]
                 MoveElements(i, maxChild, list, window)
@@ -250,6 +269,7 @@ def InsertionSort(list, window):
     while curptr < len(list):
         key = list[curptr]
         prevptr = curptr - 1
+        MarkElements(curptr, prevptr, list, window)
         while prevptr >= 0 and list[prevptr] > key:
             list[prevptr + 1] = list[prevptr]
             MoveElement(prevptr, 0, list, window)
@@ -290,12 +310,12 @@ def SelectionSort(list, window):
         ptr = curptr
         keyindex = curptr
         while ptr < len(list):
+            MarkElements(ptr, keyindex, list, window)
             if list[ptr] <= list[keyindex]:
                 keyindex = ptr
             ptr += 1
         list[curptr], list[keyindex] = list[keyindex], list[curptr]
         MoveElements(curptr, keyindex, list, window)
-        time.sleep(0.15)
         curptr += 1
     return list
       
@@ -334,7 +354,7 @@ def BucketSort(array, window):
     return array
        
 if __name__ == "__main__":       
-    window = GraphWin("Сортировки @ github.com/Worldbeater", FRAMEWIDTH, FRAMEHEIGHT)
+    window = GraphWin("Sortings @ github.com/Worldbeater", FRAMEWIDTH, FRAMEHEIGHT)
     window.setBackground(color_rgb(255, 255, 255))
     list = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
     _list = list.copy()
@@ -362,8 +382,8 @@ if __name__ == "__main__":
                 elif x < 240: CountingSort(_list, window)
                 elif x < 300: BucketSort(_list, window)
                 else:
-                    if RECTWIDTH < 10:
-                        RECTWIDTH = RECTWIDTH + 5
+                    if RECTWIDTH < 20:
+                        RECTWIDTH = RECTWIDTH + 10
                     else: 
                         RECTWIDTH = 1
                     CANVAS_SIZE = round(FRAMEWIDTH / RECTWIDTH)
