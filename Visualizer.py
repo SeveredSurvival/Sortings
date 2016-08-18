@@ -6,7 +6,7 @@ import sys
 
 FRAMEWIDTH = 500
 RECTWIDTH = 10
-INSTRUMENT_ID = 54
+INSTRUMENT_ID = 54 # 54
 
 pygame.init()
 midi.init()
@@ -18,21 +18,19 @@ FRAMEHEIGHT = FRAMEWIDTH + 100
 def DrawRect(x1, y1, x2, y2, win, color = (90,0,140)):
     pygame.draw.rect(win, color, (x1, y1, x2, y2), 0)
     for e in pygame.event.get():
-            if e.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+        if e.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
     pygame.display.flip()
 
 def Wait():
-    if RECTWIDTH < 10:
-        return
-    elif RECTWIDTH == 20:
+    if RECTWIDTH == 20:
         pygame.time.wait(100)
     else:
         pygame.time.wait(10)
 
 def Pling(note):
-    if RECTWIDTH < 10: return None
+    if RECTWIDTH == 1: return
     note = round(note / CANVAS_SIZE * 50) + 50
     PLAYER.note_on(note, 127, 1)
     Wait()
@@ -41,13 +39,13 @@ def Pling(note):
 def MarkElements(index1, index2, seq, window):
     DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * seq[index1]), RECTWIDTH, RECTWIDTH * seq[index1], window, color = (255,0,0))  
     DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * seq[index2]), RECTWIDTH, RECTWIDTH * seq[index2], window, color = (255,0,0))
-    Wait()
+    Pling(seq[index2])
     DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * seq[index1]), RECTWIDTH, RECTWIDTH * seq[index1], window) 
     DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * seq[index2]), RECTWIDTH, RECTWIDTH * seq[index2], window)
 
-def MarkElement(index1, size, seq, window):
+def MarkElement(index1, size, window):
     DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), RECTWIDTH, RECTWIDTH * size, window, color = (255,0,0))  
-    Wait()
+    Pling(size)
     DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), RECTWIDTH, RECTWIDTH * size, window) 
 
 def MoveElements(index1, index2, seq, window):
@@ -55,9 +53,9 @@ def MoveElements(index1, index2, seq, window):
     DrawRect(index1 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * seq[index1]), RECTWIDTH, RECTWIDTH * seq[index1], window)  
     DrawRect(index2 * RECTWIDTH, 100, RECTWIDTH, FRAMEHEIGHT, window, color = (255,255,255))
     DrawRect(index2 * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * seq[index2]), RECTWIDTH, RECTWIDTH * seq[index2], window)
-    Pling(int(seq[index2]))
+    Pling(seq[index2])
 
-def MoveElement(index, size, seq, window):
+def MoveElement(index, size, window):
     DrawRect(index * RECTWIDTH, 100, RECTWIDTH, FRAMEHEIGHT, window, color = (255,255,255))
     DrawRect(index * RECTWIDTH, FRAMEHEIGHT - (RECTWIDTH * size), RECTWIDTH, RECTWIDTH * size, window)
     Pling(size)
@@ -232,22 +230,21 @@ def MS(part, ofs):
     i = 0
     j = 0
     while i < len(y) and j < len(z):
-        MarkElement(i + j + ofs, y[i], list, window)
-        MarkElement(i + j + ofs, z[j], list, window)
+        MarkElement(ofs + i + j, y[i], window)
         if y[i] > z[j]:
             result.append(z[j])
-            MoveElement(i + j + ofs, z[j], list, window)
+            MoveElement(i + j + ofs, z[j], window)
             j += 1
         else:
             result.append(y[i])                
-            MoveElement(i + j + ofs, y[i], list, window)
+            MoveElement(i + j + ofs, y[i], window)
             i += 1
     for item in y[i:]:
         result.append(item)
-        MoveElement(ofs + len(result) - 1, item, list, window)        
+        MoveElement(ofs + len(result) - 1, item, window)        
     for item in z[j:]:
         result.append(item)
-        MoveElement(ofs + len(result) - 1, item, list, window)
+        MoveElement(ofs + len(result) - 1, item, window)
     return result
 
 @MeasureTime
@@ -283,14 +280,14 @@ def InsertionSort(seq, window):
     while curptr < len(seq):
         key = seq[curptr]
         prevptr = curptr - 1
-        MarkElements(curptr, prevptr, seq, window)
         while prevptr >= 0 and seq[prevptr] > key:
+            MarkElements(prevptr, prevptr + 1, seq, window)
             seq[prevptr + 1] = seq[prevptr]
-            MoveElement(prevptr, 0, seq, window)
-            MoveElement(prevptr + 1, seq[prevptr], seq, window)
+            MoveElement(prevptr, 0, window)
+            MoveElement(prevptr + 1, seq[prevptr], window)
             prevptr -= 1
         seq[prevptr + 1] = key
-        MoveElement(prevptr + 1, key, seq, window)
+        MoveElement(prevptr + 1, key, window)
         curptr += 1
     return seq
     
@@ -312,7 +309,7 @@ def RadixSort(seq, window):
             buck = buckets[b]
             for i in buck:
                 seq[a] = i
-                MoveElement(a, i, seq, window)
+                MoveElement(a, i, window)
                 a += 1
         placement *= RADIX
     return seq
@@ -339,12 +336,12 @@ def CountingSort(seq, window):
     count = [0] * (MAX + 1)
     for item in seq: 
         count[item] += 1
-        MoveElement(item, count[item], seq, window)
+        MoveElement(item, count[item], window)
     i = 0
     for item in range(MAX + 1):
         for c in range(count[item]):
             seq[i] = item
-            MoveElement(i, seq[i], seq, window)
+            MoveElement(i, seq[i], window)
             i += 1
     return seq
       
@@ -359,7 +356,7 @@ def BucketSort(seq, window):
     for i in range(0, len(seq)): 
         index = int((seq[i] - minValue) / bucketSize)
         buckets[index].append(seq[i])
-        MoveElement((index * bucketSize) + len(buckets[index]) - 1, seq[i], seq, window)      
+        MoveElement((index * bucketSize) + len(buckets[index]) - 1, seq[i], window)      
     seq = []
     offset = 0
     for i in range(0, len(buckets)):
@@ -381,6 +378,7 @@ def UpdateUI(seq, window):
 if __name__ == "__main__":
     window = pygame.display.set_mode((FRAMEWIDTH, FRAMEHEIGHT))  
     window.fill((255, 255, 255))
+    pygame.display.set_caption("Sortings @ github.com/worldbeater")
     sample = random.sample(range(CANVAS_SIZE), CANVAS_SIZE)
     _sample = sample.copy()
     GenerateUI(_sample, window)
