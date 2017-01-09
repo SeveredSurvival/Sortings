@@ -77,21 +77,32 @@ def generate_ui(seq, window):
     window.fill((255, 255, 255))
     step = 0
     for element in seq:
-        draw_rect(step, FRAMEHEIGHT - (RECTWIDTH * element), RECTWIDTH, RECTWIDTH * element, window)
+        draw_rect(
+            step,
+            FRAMEHEIGHT - (RECTWIDTH * element),
+            RECTWIDTH,
+            RECTWIDTH * element,
+            window
+        )
         step += RECTWIDTH
-    create_button(10, 15, 'Bubble', window)
-    create_button(70, 15, 'Selection', window)
-    create_button(130, 15, 'Insertion', window)
-    create_button(190, 15, 'Heap', window)
-    create_button(250, 15, 'Radix', window)
-    create_button(310, 15, 'Merge', window)
-    create_button(370, 15, 'Comb', window)
-    create_button(430, 15, 'Quick', window)
-    create_button(10, 40, 'Gnome', window)
-    create_button(70, 40, 'EvenOdd', window)
-    create_button(130, 40, 'Shaker', window)
-    create_button(190, 40, 'Counting', window)
-    create_button(250, 40, 'Bucket', window)
+    buttons = [
+        [10,  15, 'Bubble'],
+        [70,  15, 'Selection'],
+        [130, 15, 'Insertion'],
+        [190, 15, 'Heap'],
+        [250, 15, 'Radix'],
+        [310, 15, 'Merge'],
+        [370, 15, 'Comb'],
+        [430, 15, 'Quick'],
+        [10,  40, 'Gnome'],
+        [70,  40, 'EvenOdd'],
+        [130, 40, 'Shaker'],
+        [190, 40, 'Counting'],
+        [250, 40, 'Bucket'],
+    ]
+    for button in buttons:
+        button.append(window)
+        create_button(*button)
     create_button(430, 40, 'Resize', window, setbold=True)
     pygame.display.update()
 
@@ -104,7 +115,6 @@ def measure_time(function):
         create_button(10, 65, 'Time: ' + str(end - start)[0:7], main_window)
         pygame.display.flip()
         return result
-
     return timed_function
 
 
